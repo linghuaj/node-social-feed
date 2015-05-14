@@ -6,11 +6,6 @@ module.exports = {
       'consumerSecret': '...',
       'callbackUrl': '...'
     },
-    'linkedin': {
-      'consumerKey': '...',
-      'consumerSecret': '...',
-      'callbackUrl': 'http://social-authenticator.com:8000/auth/linkedin/callback'
-    },
     'twitter': {
       'consumerKey': 'OaPwwyfXjd8WkPzPEWPlpT6Fs',
       'consumerSecret': '...',
