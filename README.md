@@ -1,6 +1,6 @@
 ## Social Feed
 
-This is a aggregated Social Feed app for consumer LinkedIn, Facebook, Google, and Twitter in a single Timeline.
+This is a aggregated Social Feed app for consumer Facebook, Google, and Twitter in a single Timeline.
 
 
 Time spent: `<Number of hours spent>`
@@ -9,7 +9,7 @@ Time spent: `<Number of hours spent>`
 
 #### Required
 
-- [ ] User can sign in and connect to LinkedIn, Facebook, Google and Twitter using `passport`
+- [ ] User can sign in and connect to Facebook, Google and Twitter using `passport`
 - [ ] User can view the last 20 posts on their aggregated timeline
 - [ ] The current signed in user will be persisted across server restarts
 - [ ] In the home timeline, user can view posts with the user profile picture, username, content, origin social network and timestamp.
