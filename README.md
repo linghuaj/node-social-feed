@@ -30,6 +30,9 @@ Time spent: `<Number of hours spent>`
 
 ### Walkthrough
 
+###
+- to regiester twitter app https://apps.twitter.com/app/new
+
 ![Video Walkthrough](...)
 
 

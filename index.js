@@ -13,11 +13,17 @@ let passportMiddleware = require('./app/middlewares/passport')
 
 const NODE_ENV = process.env.NODE_ENV || 'development'
 
-let app = express(),
-  config = requireDir('./config', {recurse: true}),
-  port = process.env.PORT || 8000
+let app = express()
+let config = requireDir('./config', {
+    recurse: true
+})
+let port = process.env.PORT || 8000
 
-passportMiddleware.configure(config.auth[NODE_ENV])
+app.config = {
+    auth: config.auth[NODE_ENV],
+    database: config.database[NODE_ENV]
+}
+passportMiddleware.configure(app.config.auth)
 app.passport = passportMiddleware.passport
 
 // connect to the database
@@ -27,17 +33,21 @@ mongoose.connect(config.database[NODE_ENV].url)
 app.use(morgan('dev')) // log every request to the console
 app.use(cookieParser('ilovethenodejs')) // read cookies (needed for auth)
 app.use(bodyParser.json()) // get information from html forms
-app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.urlencoded({
+    extended: true
+}))
 
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs') // set up ejs for templating
 
 // required for passport
 app.use(session({
-  secret: 'ilovethenodejs',
-  store: new MongoStore({db: 'social-feeder'}),
-  resave: true,
-  saveUninitialized: true
+    secret: 'ilovethenodejs',
+    store: new MongoStore({
+        db: 'social-feeder'
+    }),
+    resave: true,
+    saveUninitialized: true
 }))
 
 // Setup passport authentication middleware
@@ -51,4 +61,4 @@ app.use(flash())
 require('./app/routes')(app)
 
 // start server
-app.listen(port, ()=> console.log(`Listening @ http://127.0.0.1:${port}`))
+app.listen(port, () => console.log(`Listening @ http://127.0.0.1:${port}`))
