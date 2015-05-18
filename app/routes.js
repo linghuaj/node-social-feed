@@ -60,7 +60,7 @@ module.exports = (app) => {
             let [tweets, ] = await twitterClient.promise.get('/statuses/home_timeline')
             tweets = tweets.map(tweet => {
                 return {
-                    id: tweet.id,
+                    id: tweet.id_str,
                     image: tweet.user.profile_image_url,
                     text: tweet.text,
                     name: tweet.user.name,
@@ -71,21 +71,80 @@ module.exports = (app) => {
             })
             console.log(">< tweets", JSON.stringify(tweets))
             res.render('timeline.ejs', {
-                posts: posts
+                posts: tweets
             })
         } catch (e) {
             console.log(e)
         }
     }))
 
+    app.get('/compose', isLoggedIn, (req, res) => {
+        res.render('compose.ejs')
+    })
+
+    app.post('/compose', isLoggedIn, then(async(req, res) => {
+        let text = req.body.reply
+        if (text.length > 140) {
+            return req.flash('error', 'status is over 140 chars')
+        }
+        if (!text.length) {
+            return req.flash('error', 'status is empty')
+        }
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
+        })
+
+        await twitterClient.promise.post('statuses/update', {
+            status: text
+        })
+        return res.redirect('/timeline')
+    }))
+
+    app.post('/like/:id', isLoggedIn, then(async(req, res) => {
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
+        })
+        let id = req.params.id
+
+        await twitterClient.promise.post('favorites/create', {
+            id
+        })
+
+        res.end()
+    }))
 
 
+    app.post('/unlike/:id', isLoggedIn, then(async(req, res) => {
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
+        })
+        let id = req.params.id
 
+        await twitterClient.promise.post('favorites/destroy', {
+            id
+        })
 
+        res.end()
+    }))
+
+    // app.get('/share/:id', isLoggedIn, (req, res) =>{
+    //  res.render('share.ejs', {
+    //      post: post
+    //  })
+    // })
 
     app.get('/auth/twitter', passport.authenticate('twitter'))
 
-    app.get('/auth/twitter/callback', passport.authenticate('twitter', { 
+    app.get('/auth/twitter/callback', passport.authenticate('twitter', {
         successRedirect: '/profile',
         failureRedirect: '/login',
         failureFlash: true
