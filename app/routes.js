@@ -50,7 +50,6 @@ module.exports = (app) => {
             console.log(">< in timeline")
             console.log("req.user.twitter", req.user.twitter)
             console.log("twitterConfig", twitterConfig)
-
             let twitterClient = new Twitter({
                 consumer_key: twitterConfig.consumerKey,
                 consumer_secret: twitterConfig.consumerSecret,
@@ -136,7 +135,7 @@ module.exports = (app) => {
         res.end()
     }))
 
-    app.get('/reply/:id', isLoggedIn, then(async (req, res) => {
+    app.get('/reply/:id', isLoggedIn, then(async(req, res) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
@@ -144,13 +143,23 @@ module.exports = (app) => {
             access_token_secret: req.user.twitter.secret
         })
         let id = req.params.id
-        let [tweet, ] = await twitterClient.promise.get('/statuses/show/' + id )
+        let [tweet, ] = await twitterClient.promise.get('/statuses/show/' + id)
+
+        tweet = {
+            id: tweet.id_str,
+            image: tweet.user.profile_image_url,
+            text: tweet.text,
+            name: tweet.user.name,
+            username: "@" + tweet.user.screen_name,
+            liked: tweet.favorited,
+            network: networks.twitter
+        }
+
         res.render('reply.ejs', {
             post: tweet
         })
     }))
 
-    //TODO: find out api
     app.post('/reply/:id', isLoggedIn, then(async(req, res) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
@@ -160,8 +169,6 @@ module.exports = (app) => {
         })
         let id = req.params.id
         let text = req.body.reply
-        console.log(">< id", id)
-        console.log(">< text", text)
         if (text.length > 140) {
             return req.flash('error', 'status is over 140 chars')
         }
@@ -177,11 +184,54 @@ module.exports = (app) => {
     }))
 
 
-    app.get('/share/:id', isLoggedIn, (req, res) => {
-        res.render('share.ejs', {
-            post: posts
+    app.get('/share/:id', isLoggedIn, then(async(req, res) => {
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
         })
-    })
+        let id = req.params.id
+        let [tweet, ] = await twitterClient.promise.get('/statuses/show/' + id)
+
+        tweet = {
+            id: tweet.id_str,
+            image: tweet.user.profile_image_url,
+            text: tweet.text,
+            name: tweet.user.name,
+            username: "@" + tweet.user.screen_name,
+            liked: tweet.favorited,
+            network: networks.twitter
+        }
+
+        res.render('share.ejs', {
+            post: tweet
+        })
+    }))
+    app.post('/share/:id', isLoggedIn, then(async(req, res) => {
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
+        })
+        let id = req.params.id
+        console.log("><req.body", req.body)
+        let text = req.body.share
+        if (text.length > 140) {
+            return req.flash('error', 'status is over 140 chars')
+        }
+        if (!text.length) {
+            return req.flash('error', 'status is empty')
+        }
+        try {
+
+            await twitterClient.promise.post('statuses/retweet/' + id, {text})
+        } catch (e) {
+            console.log("><E", e)
+        }
+        return res.end()
+    }))
 
     app.get('/auth/twitter', passport.authenticate('twitter'))
 
