@@ -136,11 +136,52 @@ module.exports = (app) => {
         res.end()
     }))
 
-    // app.get('/share/:id', isLoggedIn, (req, res) =>{
-    //  res.render('share.ejs', {
-    //      post: post
-    //  })
-    // })
+    app.get('/reply/:id', isLoggedIn, then(async (req, res) => {
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
+        })
+        let id = req.params.id
+        let [tweet, ] = await twitterClient.promise.get('/statuses/show/' + id )
+        res.render('reply.ejs', {
+            post: tweet
+        })
+    }))
+
+    //TODO: find out api
+    app.post('/reply/:id', isLoggedIn, then(async(req, res) => {
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
+        })
+        let id = req.params.id
+        let text = req.body.reply
+        console.log(">< id", id)
+        console.log(">< text", text)
+        if (text.length > 140) {
+            return req.flash('error', 'status is over 140 chars')
+        }
+        if (!text.length) {
+            return req.flash('error', 'status is empty')
+        }
+
+        await twitterClient.promise.post('statuses/update', {
+            status: "@LinghuaJ " + text,
+            in_reply_to_status_id: id
+        })
+        return res.end()
+    }))
+
+
+    app.get('/share/:id', isLoggedIn, (req, res) => {
+        res.render('share.ejs', {
+            post: posts
+        })
+    })
 
     app.get('/auth/twitter', passport.authenticate('twitter'))
 
