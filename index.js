@@ -11,7 +11,7 @@ let flash = require('connect-flash')
 
 let passportMiddleware = require('./app/middlewares/passport')
 
-const NODE_ENV = process.env.NODE_ENV
+const NODE_ENV = process.env.NODE_ENV || 'development'
 
 let app = express(),
   config = requireDir('./config', {recurse: true}),
