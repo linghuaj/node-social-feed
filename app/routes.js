@@ -241,6 +241,14 @@ module.exports = (app) => {
         failureFlash: true
     }))
 
+        // Authorization route & Callback URL
+    app.get('/connect/twitter', passport.authorize('twitter'))
+    app.get('/connect/facebook/twitter', passport.authorize('twitter', {
+        successRedirect: '/profile',
+        failureRedirect: '/login',
+        failureFlash: true
+    }))
+
     //TODO: complete facebook login
     // Authentication route & Callback URL
     app.get('/auth/facebook', passport.authenticate('facebook', {

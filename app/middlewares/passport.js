@@ -21,22 +21,34 @@ function useExternalPassportStrategy(OauthStrategy, config, accountType) {
     console.log("><strategy", accountType)
 
     async
+
     function authCB(req, token, _ignored_, account) {
         let accountID = account.id
-        let user = await User.promise.findOne({
-                 'twitter.id': accountID
-             })
-            // try {
-            //   user  = User.promise.find({
-            //         accountID
-            //     })
-            // } catch (e) {
-            //     console.log(">e", e)
-            // }
+        let queryKey = accountType + ".id"
+        let user
+        if (req.user) {
+            user = await User.promise.findById(req.user.id)
+        } else {
+            //if such user exist in database for facebook or twitter
+            user = await User.promise.findOne({
+                queryKey: accountID
+            })
+
+        }
+        console.log("><req user", req.user)
+
+        // try {
+        //   user  = User.promise.find({
+        //         accountID
+        //     })
+        // } catch (e) {
+        //     console.log(">e", e)
+        // }
+
         if (!user) {
             user = new User({})
         }
-        user.twitter = {
+        user[accountType] = {
             id: accountID,
             token: token,
             secret: _ignored_,
@@ -44,15 +56,6 @@ function useExternalPassportStrategy(OauthStrategy, config, accountType) {
         }
 
         return await user.save()
-            // Your generic 3rd-party passport strategy implementation here
-            // Use account.id to Load the user from the database (e.g., user.facebook.id)
-            // If req.user exists, the user is adding an account (authorization): 
-            // Validate req.user.facebook.id equals user.facebook.id
-            // Store the Facebook user data in account in user.facebook
-            // 
-            // else
-            // Create the user if none loaded from the database
-            // link the account to user
     }
 }
 
