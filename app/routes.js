@@ -52,8 +52,8 @@ module.exports = (app) => {
             let twitterClient = new Twitter({
                 consumer_key: twitterConfig.consumerKey,
                 consumerSecret: twitterConfig.consumerSecret,
-                access_token_key: '985869984-07pwtBNMg3munMUwDHgpN3Fs2XJhYD76c4iHKJ2r', //req.user.twitter.token,
-                access_token_secret: 'cIoSBlVzzoM1g3RTyYDLnBv4HNAxXy3QvjTxCtUyjoAsS' //req.user.twitter.secret
+                access_token_key:  req.user.twitter.token,
+                access_token_secret: req.user.twitter.secret
             })
             let [tweets, ] = await twitterClient.promise.get('/statuses/home_timeline')
             tweets = tweets.map(tweet => {
