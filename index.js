@@ -23,6 +23,7 @@ app.config = {
     auth: config.auth[NODE_ENV],
     database: config.database[NODE_ENV]
 }
+
 passportMiddleware.configure(app.config.auth)
 app.passport = passportMiddleware.passport
 
@@ -44,7 +45,7 @@ app.set('view engine', 'ejs') // set up ejs for templating
 app.use(session({
     secret: 'ilovethenodejs',
     store: new MongoStore({
-        db: 'social-feeder'
+        db: 'social-feed'
     }),
     resave: true,
     saveUninitialized: true

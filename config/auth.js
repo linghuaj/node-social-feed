@@ -1,4 +1,5 @@
 // config/auth.js
+// !Important. DO NOT USE MY AUTH KEY!
 module.exports = {
     'development': {
         'facebook': {

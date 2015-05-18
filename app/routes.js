@@ -45,14 +45,16 @@ module.exports = (app) => {
 
     //TODO: addback isloggin
 
-    app.get('/timeline', then(async(req, res) => {
+    app.get('/timeline', isLoggedIn, then(async(req, res) => {
         try {
             console.log(">< in timeline")
+            console.log("req.user.twitter", req.user.twitter)
+            console.log("twitterConfig", twitterConfig)
 
             let twitterClient = new Twitter({
                 consumer_key: twitterConfig.consumerKey,
-                consumerSecret: twitterConfig.consumerSecret,
-                access_token_key:  req.user.twitter.token,
+                consumer_secret: twitterConfig.consumerSecret,
+                access_token_key: req.user.twitter.token,
                 access_token_secret: req.user.twitter.secret
             })
             let [tweets, ] = await twitterClient.promise.get('/statuses/home_timeline')
@@ -79,13 +81,24 @@ module.exports = (app) => {
 
 
 
+
+
+    app.get('/auth/twitter', passport.authenticate('twitter'))
+
+    app.get('/auth/twitter/callback', passport.authenticate('twitter', { 
+        successRedirect: '/profile',
+        failureRedirect: '/login',
+        failureFlash: true
+    }))
+
+    //TODO: complete facebook login
     // Authentication route & Callback URL
     app.get('/auth/facebook', passport.authenticate('facebook', {
         scope
     }))
     app.get('/auth/facebook/callback', passport.authenticate('facebook', {
         successRedirect: '/profile',
-        failureRedirect: '/profile',
+        failureRedirect: '/login',
         failureFlash: true
     }))
 
