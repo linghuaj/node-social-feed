@@ -1,11 +1,18 @@
 let _ = require('lodash')
 let Twitter = require('twitter')
+let FB = require('fb')
 let then = require('express-then')
 let isLoggedIn = require('./middlewares/isLoggedIn')
 let posts = require('../data/posts')
 
+
 let networks = {
     twitter: {
+        icon: 'twitter',
+        name: 'twitter',
+        class: 'btn-info'
+    },
+    facebook: {
         icon: 'facebook',
         name: 'Facebook',
         class: 'btn-primary'
@@ -15,8 +22,16 @@ let networks = {
 module.exports = (app) => {
     let passport = app.passport
         // Scope specifies the desired data fields from the user account
-    let scope = 'email'
+    let scope = 'email, user_posts, read_stream'
     let twitterConfig = app.config.auth.twitter
+    let fbConfig = app.config.auth.facebook
+
+    FB.options({
+        appId: fbConfig.consumerKey,
+        appSecret: fbConfig.consumerSecret,
+        redirectUri: fbConfig.redirectUri
+    })
+
     app.get('/', (req, res) => res.render('index.ejs'))
 
     app.get('/profile', isLoggedIn, (req, res) => {
@@ -48,8 +63,8 @@ module.exports = (app) => {
     app.get('/timeline', isLoggedIn, then(async(req, res) => {
         try {
             console.log(">< in timeline")
-            console.log("req.user.twitter", req.user.twitter)
-            console.log("twitterConfig", twitterConfig)
+            // console.log("req.user.twitter", req.user.twitter)
+            // console.log("twitterConfig", twitterConfig)
             let twitterClient = new Twitter({
                 consumer_key: twitterConfig.consumerKey,
                 consumer_secret: twitterConfig.consumerSecret,
@@ -68,9 +83,66 @@ module.exports = (app) => {
                     network: networks.twitter
                 }
             })
-            console.log(">< tweets", JSON.stringify(tweets))
+            console.log("req.user.facebook", req.user.facebook)
+
+            let fbPosts
+            //TODO: fix this
+  
+            try {
+                let fbPosts = await FB.api.promise('/me/home', {
+                    // fields: 'id, story,picture',
+                    limit: 10,
+                    access_token: req.user.facebook.token
+                })
+                console.log("><fbPosts", fbPosts)
+            } catch (e) {
+                fbPosts = e.data
+                console.log("E", e)
+            }
+            console.log(">< from", fbPosts[0].from)
+
+            let fbPostsProcessed = []
+            for (let post of fbPosts){
+                 let userId = post.from.id
+                 let picUri = '/'+ userId +'/picture'
+                 console.log(">< picUri", picUri)
+                 let userPicture
+                 try {
+                  userPicture = await FB.api.promise.get(picUri)}
+                 catch(e){
+                    console.log("><e picture", e)
+                 }
+                 fbPostsProcessed.push({
+                    id: post.id,
+                    image: userPicture, //post.picture,
+                    text: post.story || post.message,
+                    name: post.from.name,
+                    // username: "@" + tweet.user.screen_name,
+                    // liked: tweet.favorited,
+                    network: networks.facebook
+
+                 })
+            }
+
+            // fbPosts = fbPosts.map(post => {
+            //     let userId = post.from.id
+            //     let picUri = '/{'+ userId +'}/picture'
+            //     let userPicture = await FB.api.promise.get(picUri)
+            //     // console.log userPicture
+            //     return {
+            //         id: post.id,
+            //         image: post.picture,
+            //         text: post.story || post.message,
+            //         name: post.from.name,
+            //         // username: "@" + tweet.user.screen_name,
+            //         // liked: tweet.favorited,
+            //         network: networks.facebook
+            //     }
+            // })
+
+            let aggregatedPosts = _.union(fbPostsProcessed, tweets)
             res.render('timeline.ejs', {
-                posts: tweets
+                posts: aggregatedPosts
             })
         } catch (e) {
             console.log(e)
@@ -226,7 +298,9 @@ module.exports = (app) => {
         }
         try {
 
-            await twitterClient.promise.post('statuses/retweet/' + id, {text})
+            await twitterClient.promise.post('statuses/retweet/' + id, {
+                text
+            })
         } catch (e) {
             console.log("><E", e)
         }
@@ -241,7 +315,7 @@ module.exports = (app) => {
         failureFlash: true
     }))
 
-        // Authorization route & Callback URL
+    // Authorization route & Callback URL
     app.get('/connect/twitter', passport.authorize('twitter'))
     app.get('/connect/facebook/twitter', passport.authorize('twitter', {
         successRedirect: '/profile',
