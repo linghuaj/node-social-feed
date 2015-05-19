@@ -115,10 +115,10 @@ module.exports = (app) => {
                 }
                 //list of likes is coming from the api.
                 let likes = post.likes ? post.likes.data : []
-                //find if likes array contains this user. 
+                    //find if likes array contains this user. 
                 let liked = _.findIndex(likes, {
-                        'id': req.user.facebook.id
-                    }) >= 0 
+                    'id': req.user.facebook.id
+                }) >= 0
 
                 fbPostsProcessed.push({
                     id: post.id,
@@ -252,13 +252,14 @@ module.exports = (app) => {
         res.end()
     }))
 
-    app.get('/reply/:id', isLoggedIn, then(async(req, res) => {
+    app.get('/twitter/reply/:id', isLoggedIn, then(async(req, res) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
             access_token_key: req.user.twitter.token,
             access_token_secret: req.user.twitter.secret
         })
+        console.log(">< params", req.params)
         let id = req.params.id
         let [tweet, ] = await twitterClient.promise.get('/statuses/show/' + id)
 
@@ -271,13 +272,53 @@ module.exports = (app) => {
             liked: tweet.favorited,
             network: networks.twitter
         }
+        console.log(">< in tweet reply, tweet", tweet)
 
         res.render('reply.ejs', {
             post: tweet
         })
     }))
+    //?name and text
+    app.get('/facebook/reply/:id', isLoggedIn, then(async(req, res) => {
+        let id = req.params.id
+        let post
+        //TODO fix the post with content
+        post = {
+            id: id,
+            // image: , //post.picture,
+            text: req.query.text, //post.story || post.message,
+            name: req.query.name, //post.from.name,
+            image: decodeURIComponent(req.query.img) + '',
+            // username: "@" + tweet.user.screen_name,
+            network: networks.facebook
+        }
+        console.log(">< post.pic", )
 
-    app.post('/reply/:id', isLoggedIn, then(async(req, res) => {
+        res.render('reply.ejs', {
+            post: post
+        })
+    }))
+
+    app.get('/facebook/share/:id', isLoggedIn, then(async(req, res) => {
+        let id = req.params.id
+        let post
+        //TODO fix the post with content
+        post = {
+            id: id,
+            // image: , //post.picture,
+            text: req.query.text, //post.story || post.message,
+            name: req.query.name, //post.from.name,
+            image: decodeURIComponent(req.query.img) + '',
+            // username: "@" + tweet.user.screen_name,
+            network: networks.facebook
+        }
+
+        res.render('share.ejs', {
+            post: post
+        })
+    }))
+
+    app.post('/twitter/reply/:id', isLoggedIn, then(async(req, res) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
@@ -301,7 +342,7 @@ module.exports = (app) => {
     }))
 
 
-    app.get('/share/:id', isLoggedIn, then(async(req, res) => {
+    app.get('/twitter/share/:id', isLoggedIn, then(async(req, res) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
@@ -325,7 +366,7 @@ module.exports = (app) => {
             post: tweet
         })
     }))
-    app.post('/share/:id', isLoggedIn, then(async(req, res) => {
+    app.post('/twitter/share/:id', isLoggedIn, then(async(req, res) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
@@ -362,9 +403,9 @@ module.exports = (app) => {
 
     // Authorization route & Callback URL
     app.get('/connect/twitter', passport.authorize('twitter'))
-    app.get('/connect/facebook/twitter', passport.authorize('twitter', {
+    app.get('/connect/twitter/callback', passport.authorize('twitter', {
         successRedirect: '/profile',
-        failureRedirect: '/login',
+        failureRedirect: '/profile',
         failureFlash: true
     }))
 

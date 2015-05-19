@@ -44,8 +44,15 @@
                 </div>
                 <div class="row _icons">
                     <i class="fa <%= post.liked ? "fa-thumbs-up" : "fa-thumbs-o-up" %> fa-2x _like" data-network="<%= post.network.name %>" name="like<%= post.id %>"></i> 
-                    <a href="/reply/<%= post.id %>" class="fa fa-reply fa-2x"></a>
-                    <a href="/share/<%= post.id %>" class="fa fa-share-square-o fa-2x"></a>
+                     <% if ( post.network.name == 'twitter') { %>
+                        <a href="/twitter/reply/<%= post.id %>" class="fa fa-reply fa-2x" data-network="<%= post.network.name %>"></a>
+                        <a href="/twitter/share/<%= post.id %>" class="fa fa-share-square-o fa-2x"></a>
+                    <% }else{  
+                        var urlPartial= post.id + '?name=' + encodeURIComponent(post.name) + '&text=' + encodeURIComponent(post.text) + "&img=" + encodeURIComponent(post.image)
+                        %>
+                        <a href="/facebook/reply/<%= urlPartial %>" class="fa fa-reply fa-2x"></a>
+                        <a href="/facebook/share/<%= urlPartial %>" class="fa fa-share-square-o fa-2x"></a>
+                    <% } %>
                 </div>
             </div>
             <div class="col-xs-2">
