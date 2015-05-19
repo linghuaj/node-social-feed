@@ -43,7 +43,7 @@
             
                 </div>
                 <div class="row _icons">
-                    <i class="fa <%= post.liked ? "fa-thumbs-up" : "fa-thumbs-o-up" %> fa-2x _like" name="like<%= post.id %>"></i> 
+                    <i class="fa <%= post.liked ? "fa-thumbs-up" : "fa-thumbs-o-up" %> fa-2x _like" data-network="<%= post.network.name %>" name="like<%= post.id %>"></i> 
                     <a href="/reply/<%= post.id %>" class="fa fa-reply fa-2x"></a>
                     <a href="/share/<%= post.id %>" class="fa fa-share-square-o fa-2x"></a>
                 </div>
@@ -61,12 +61,22 @@
         $('._like').click(function() {
             var $this = $(this)
             var id = $this.attr('name').replace('like', '')
+            var network = $(this).data('network')
+            console.log(network)
             $this.toggleClass('fa-thumbs-o-up')
             $this.toggleClass('fa-thumbs-up')
+
+            var likeUrl = '/' + network +'/like/' + id
+            var unlikeUrl = '/' + network +'/unlike/' + id
+
+            console.log(">, likeUrl", likeUrl)
+            console.log(">< unlikeUrl", unlikeUrl)
+
+
             if ($this.hasClass('fa-thumbs-up')) {
-                $.post('like/' + id)
+                $.post(likeUrl)
             } else {
-                $.post('unlike/' + id)
+                $.post(unlikeUrl)
             }
         })
     })

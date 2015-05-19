@@ -4,7 +4,11 @@ let FB = require('fb')
 let then = require('express-then')
 let isLoggedIn = require('./middlewares/isLoggedIn')
 let posts = require('../data/posts')
+    // FB Utils to get permission 
+    // let permission = await FB.api.promise('/me/permissions', {
 
+//             access_token: req.user.facebook.token
+//         })
 
 let networks = {
     twitter: {
@@ -14,7 +18,7 @@ let networks = {
     },
     facebook: {
         icon: 'facebook',
-        name: 'Facebook',
+        name: 'facebook',
         class: 'btn-primary'
     }
 }
@@ -22,7 +26,7 @@ let networks = {
 module.exports = (app) => {
     let passport = app.passport
         // Scope specifies the desired data fields from the user account
-    let scope = 'email, user_posts, read_stream'
+    let scope = 'email, user_posts, read_stream, user_likes, publish_actions'
     let twitterConfig = app.config.auth.twitter
     let fbConfig = app.config.auth.facebook
 
@@ -87,11 +91,11 @@ module.exports = (app) => {
             let fbPosts
             try {
                 let fbPosts = await FB.api.promise('/me/home', {
-                    // fields: 'id, story,picture',
-                    limit: 10,
-                    access_token: req.user.facebook.token
-                })
-                console.log("><fbPosts", fbPosts)
+                        // fields: 'id, story,picture',
+                        limit: 10,
+                        access_token: req.user.facebook.token
+                    })
+                    // console.log("><fbPosts", fbPosts)
             } catch (e) {
                 fbPosts = e.data
                 console.log("E", e)
@@ -111,6 +115,12 @@ module.exports = (app) => {
                     //TODO: so weird. plz fix
                     userPicture = e.data
                 }
+                //list of likes is coming from the api.
+                let likes = post.likes ? post.likes.data : []
+
+                console.log(">< likes", likes)
+                console.log("req.user.id", req.user.facebook.id)
+
                 fbPostsProcessed.push({
                     id: post.id,
                     image: userPicture.url, //post.picture,
@@ -118,27 +128,13 @@ module.exports = (app) => {
                     name: post.from.name,
                     pic: post.picture,
                     // username: "@" + tweet.user.screen_name,
-                    // liked: tweet.favorited,
+                    liked: _.findIndex(likes, {
+                        'id': req.user.facebook.id
+                    }) >= 0, //find if likes array contains this user. 
                     network: networks.facebook
 
                 })
             }
-
-            // fbPosts = fbPosts.map(post => {
-            //     let userId = post.from.id
-            //     let picUri = '/{'+ userId +'}/picture'
-            //     let userPicture = await FB.api.promise.get(picUri)
-            //     // console.log userPicture
-            //     return {
-            //         id: post.id,
-            //         image: post.picture,
-            //         text: post.story || post.message,
-            //         name: post.from.name,
-            //         // username: "@" + tweet.user.screen_name,
-            //         // liked: tweet.favorited,
-            //         network: networks.facebook
-            //     }
-            // })
 
             let aggregatedPosts = _.union(fbPostsProcessed)
             res.render('timeline.ejs', {
@@ -174,7 +170,7 @@ module.exports = (app) => {
         return res.redirect('/timeline')
     }))
 
-    app.post('/like/:id', isLoggedIn, then(async(req, res) => {
+    app.post('/twitter/like/:id', isLoggedIn, then(async(req, res) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
@@ -191,7 +187,34 @@ module.exports = (app) => {
     }))
 
 
-    app.post('/unlike/:id', isLoggedIn, then(async(req, res) => {
+
+    app.post('/facebook/like/:id', isLoggedIn, then(async(req, res) => {
+        let id = req.params.id
+        let uri = `/${id}/likes`
+        try {
+            await FB.api.promise(uri, 'post', {
+                access_token: req.user.facebook.token
+            })
+        } catch (e) {
+            console.log("e", e)
+        }
+        res.end()
+    }))
+    app.post('/facebook/unlike/:id', isLoggedIn, then(async(req, res) => {
+        let id = req.params.id
+        let uri = `/${id}/likes`
+        try {
+            await FB.api.promise(uri, 'delete', {
+                access_token: req.user.facebook.token
+            })
+        } catch (e) {
+            console.log("e", e)
+        }
+        res.end()
+    }))
+
+
+    app.post('/twitter/unlike/:id', isLoggedIn, then(async(req, res) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
