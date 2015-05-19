@@ -37,7 +37,10 @@
                     <p>
                         <strong><%= post.name %></strong> <%= post.username %><br>
                         <%- post.text %>
+
                     </p>
+                    <img src="<%= post.pic %>">
+            
                 </div>
                 <div class="row _icons">
                     <i class="fa <%= post.liked ? "fa-thumbs-up" : "fa-thumbs-o-up" %> fa-2x _like" name="like<%= post.id %>"></i> 

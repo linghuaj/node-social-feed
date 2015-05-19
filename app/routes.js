@@ -65,29 +65,26 @@ module.exports = (app) => {
             console.log(">< in timeline")
             // console.log("req.user.twitter", req.user.twitter)
             // console.log("twitterConfig", twitterConfig)
-            let twitterClient = new Twitter({
-                consumer_key: twitterConfig.consumerKey,
-                consumer_secret: twitterConfig.consumerSecret,
-                access_token_key: req.user.twitter.token,
-                access_token_secret: req.user.twitter.secret
-            })
-            let [tweets, ] = await twitterClient.promise.get('/statuses/home_timeline')
-            tweets = tweets.map(tweet => {
-                return {
-                    id: tweet.id_str,
-                    image: tweet.user.profile_image_url,
-                    text: tweet.text,
-                    name: tweet.user.name,
-                    username: "@" + tweet.user.screen_name,
-                    liked: tweet.favorited,
-                    network: networks.twitter
-                }
-            })
-            console.log("req.user.facebook", req.user.facebook)
+            // let twitterClient = new Twitter({
+            //     consumer_key: twitterConfig.consumerKey,
+            //     consumer_secret: twitterConfig.consumerSecret,
+            //     access_token_key: req.user.twitter.token,
+            //     access_token_secret: req.user.twitter.secret
+            // })
+            // let [tweets, ] = await twitterClient.promise.get('/statuses/home_timeline')
+            // tweets = tweets.map(tweet => {
+            //     return {
+            //         id: tweet.id_str,
+            //         image: tweet.user.profile_image_url,
+            //         text: tweet.text,
+            //         name: tweet.user.name,
+            //         username: "@" + tweet.user.screen_name,
+            //         liked: tweet.favorited,
+            //         network: networks.twitter
+            //     }
+            // })
 
             let fbPosts
-            //TODO: fix this
-  
             try {
                 let fbPosts = await FB.api.promise('/me/home', {
                     // fields: 'id, story,picture',
@@ -102,26 +99,29 @@ module.exports = (app) => {
             console.log(">< from", fbPosts[0].from)
 
             let fbPostsProcessed = []
-            for (let post of fbPosts){
-                 let userId = post.from.id
-                 let picUri = '/'+ userId +'/picture'
-                 console.log(">< picUri", picUri)
-                 let userPicture
-                 try {
-                  userPicture = await FB.api.promise.get(picUri)}
-                 catch(e){
-                    console.log("><e picture", e)
-                 }
-                 fbPostsProcessed.push({
+            for (let post of fbPosts) {
+                let userId = post.from.id
+                let picUri = '/' + userId + '/picture'
+                let userPicture
+                try {
+                    userPicture = await FB.api.promise(picUri, {
+                        redirect: false
+                    })
+                } catch (e) {
+                    //TODO: so weird. plz fix
+                    userPicture = e.data
+                }
+                fbPostsProcessed.push({
                     id: post.id,
-                    image: userPicture, //post.picture,
+                    image: userPicture.url, //post.picture,
                     text: post.story || post.message,
                     name: post.from.name,
+                    pic: post.picture,
                     // username: "@" + tweet.user.screen_name,
                     // liked: tweet.favorited,
                     network: networks.facebook
 
-                 })
+                })
             }
 
             // fbPosts = fbPosts.map(post => {
@@ -140,7 +140,7 @@ module.exports = (app) => {
             //     }
             // })
 
-            let aggregatedPosts = _.union(fbPostsProcessed, tweets)
+            let aggregatedPosts = _.union(fbPostsProcessed)
             res.render('timeline.ejs', {
                 posts: aggregatedPosts
             })
