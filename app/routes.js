@@ -99,6 +99,7 @@ module.exports = (app) => {
                 fbPosts = e.data
                 // console.log("E", e)
             }
+            console.log(">< fbPosts", fbPosts)
 
             let fbPostsProcessed = []
             for (let post of fbPosts) {
@@ -132,6 +133,7 @@ module.exports = (app) => {
 
                 })
             }
+
 
             let aggregatedPosts = _.union(fbPostsProcessed, tweets)
             res.render('timeline.ejs', {
@@ -343,11 +345,17 @@ module.exports = (app) => {
         if (!text.length) {
             return req.flash('error', 'status is empty')
         }
-        let uri = `/${id}/shareposts`
+        // construct id of 112345678_987654321 into
+        // https://www.facebook.com/12345678/posts/987654321
+        let id_fragments = id.split('_')
+        let link = "https://www.facebook.com/" + id_fragments[0] +'/posts/' +  id_fragments[1]
+        // let uri = `/${id}/shareposts`
+        console.log("><link", link)
         try {
-            await FB.api.promise(uri, 'post', {
+            await FB.api.promise('/me/links', 'post', {
                 access_token: req.user.facebook.token,
-                message: text
+                // message: text,
+                link: link
             })
         } catch (e) {
             console.log("e", e)
