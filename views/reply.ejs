@@ -43,7 +43,7 @@
     </div>
 
     <div class="row">
-        <form action="/reply/<%= post.id %>" method="POST">
+        <form action="/<%= post.network.name %>/reply/<%= post.id %>" method="POST">
             <div class="form-group">
                 <textarea name="reply" class="form-control" rows="3" placeholder="Your reply here..."></textarea>
             </div>

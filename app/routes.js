@@ -282,7 +282,7 @@ module.exports = (app) => {
     app.get('/facebook/reply/:id', isLoggedIn, then(async(req, res) => {
         let id = req.params.id
         let post
-        //TODO fix the post with content
+            //TODO fix the post with content
         post = {
             id: id,
             // image: , //post.picture,
@@ -302,7 +302,7 @@ module.exports = (app) => {
     app.get('/facebook/share/:id', isLoggedIn, then(async(req, res) => {
         let id = req.params.id
         let post
-        //TODO fix the post with content
+            //TODO fix the post with content
         post = {
             id: id,
             // image: , //post.picture,
@@ -317,6 +317,44 @@ module.exports = (app) => {
             post: post
         })
     }))
+
+    app.post('/facebook/reply/:id', isLoggedIn, then(async(req, res) => {
+
+        let id = req.params.id
+        let text = req.body.reply
+        if (!text.length) {
+            return req.flash('error', 'status is empty')
+        }
+        let uri = `/${id}/comments`
+        try {
+            await FB.api.promise(uri, 'post', {
+                access_token: req.user.facebook.token,
+                message: text
+            })
+        } catch (e) {
+            console.log("e", e)
+        }
+        res.end()
+    }))
+
+    app.post('/facebook/share/:id', isLoggedIn, then(async(req, res) => {
+        let id = req.params.id
+        let text = req.body.share
+        if (!text.length) {
+            return req.flash('error', 'status is empty')
+        }
+        let uri = `/${id}/shareposts`
+        try {
+            await FB.api.promise(uri, 'post', {
+                access_token: req.user.facebook.token,
+                message: text
+            })
+        } catch (e) {
+            console.log("e", e)
+        }
+        res.end()
+    }))
+
 
     app.post('/twitter/reply/:id', isLoggedIn, then(async(req, res) => {
         let twitterClient = new Twitter({
